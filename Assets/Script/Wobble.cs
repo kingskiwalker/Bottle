@@ -21,9 +21,10 @@ public class Wobble : MonoBehaviour
     Vector3 lastPos;
     Vector3 angularVelocity;
     Vector3 lastRot;
+    Material mat;
     void Start()
     {
-        
+        mat = GetComponent<Renderer>().material;
     }
 
     // Update is called once per frame
@@ -39,6 +40,8 @@ public class Wobble : MonoBehaviour
         pulse = 2 * Mathf.PI * WobbleSpeed;
         wobbleAmountX = wobbleAmountToAddX * Mathf.Sin(pulse * time);
         wobbleAmountZ = wobbleAmountToAddZ * Mathf.Sin(pulse * time);
+        mat.SetFloat("_WobbleX",wobbleAmountX);
+        mat.SetFloat("_WobbleZ",wobbleAmountZ);
 
         ///
 

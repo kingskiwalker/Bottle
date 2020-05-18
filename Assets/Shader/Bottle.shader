@@ -4,9 +4,8 @@
     {
         _MainTex ("Texture", 2D) = "white" {}
         _Fill("_FillAmount",float) = 1
-        _float("F",float) = 360
         _WobbleX("Wobblex",Range(-1,1))=0.0
-        _WobbleY("WobbleY",Range(-1,1))=0.0
+        _WobbleZ("WobbleZ",Range(-1,1))=0.0
     }
     SubShader
     {
@@ -17,7 +16,7 @@
         {
             Cull Back
             ZWrite On
-//            AlphaToMask on //用于剔除黑色部分
+        //    AlphaToMask on //用于剔除黑色部分
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -43,6 +42,8 @@
             float4 _MainTex_ST;
             float _Fill;
             float _float;
+            float _WobbleX;
+            float _WobbleZ;
 
 		   float getSine(float x){
 				return sin(2*3.14159*(x))*0.03;
@@ -71,14 +72,15 @@
 
 
                 o.uv=TRANSFORM_TEX(v.uv,_MainTex);
-
-                float3 worldPosX = RotateAroundYInDegrees(v.vertex,360);
-                float3 worldPosZ = float3(worldPosX.y,worldPosX.z,worldPosX.x);
-                float3 worldPosAdjusted = v.vertex + (worldPosX);//+ (worldPosZ );
-                v.vertex.y+=worldPosX.y;
                 o.vertex =  UnityObjectToClipPos( v.vertex);
-//                float3 worldPos = mul(unity_ObjectToWorld,v.vertex.xyz);
-//                worldPosAdjusted = 
+
+                float3 worldPos = mul(unity_ObjectToWorld,v.vertex.xyz); //此处如果用xyzw 把w分量页进行转换会导致以世界坐标0点为root坐标
+                float3 worldPosX = RotateAroundYInDegrees(float4(worldPos,0),360);
+                float3 worldPosZ = float3(worldPosX.y,worldPosX.z,worldPosX.x);
+                float3 worldPosAdjusted =worldPos+ (worldPosX*_WobbleX )+ (worldPosZ*_WobbleZ );
+
+                o.height  = _Fill + worldPosAdjusted.y;
+
                 o.pos = float4( worldPosAdjusted,0);
                 return o;
             }
@@ -87,7 +89,7 @@
             {
 				float4  col =tex2D(_MainTex,i.uv) ;
                 
-                return col; 
+                return i.height; 
             }
             ENDCG
         }
