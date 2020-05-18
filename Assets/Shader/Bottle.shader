@@ -115,7 +115,7 @@
         pass{
             Cull back
             ZWrite off 
-            AlphaToMask ON
+            Blend SrcAlpha OneMinusSrcAlpha
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -134,7 +134,9 @@
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
-                float L :TEXCOORD1;
+                fixed3 N :TEXCOORD1;
+                fixed3 L :TEXCOORD2;
+                fixed3 V :TEXCOORD2;
             };
 
             v2f vert (appdata v)
