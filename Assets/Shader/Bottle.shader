@@ -4,6 +4,10 @@
     {
         _MainTex ("Texture", 2D) = "white" {}
         _Fill("_FillAmount",float) = 1
+        [HDR]_FrontColor("_FrontColor",color)=(1,1,1,1)
+        [HDR]_BackColor("_BackColor",color)=(1,1,1,1)
+        [HDR]_EdgeColor("_FillColor",color)=(1,1,1,1)
+        _EdgeWidth("_Width",Range(0,0.5))=0.1
         [HideInInspector]
         _WobbleX("Wobblex",Range(-1,1))=0.0
         [HideInInspector]
@@ -18,7 +22,7 @@
         {
             Cull off
             ZWrite On
-           AlphaToMask on //用于剔除黑色部分
+            AlphaToMask on //用于剔除黑色部分
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -42,6 +46,12 @@
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
+
+            float4 _FrontColor;
+            float4 _BackColor;
+            float4 _EdgeColor;
+
+            float _EdgeWidth;
             float _Fill;
             float _float;
             float _WobbleX;
@@ -88,18 +98,65 @@
 
             fixed4 frag (v2f i,fixed facing:VFACE) : SV_Target
             {
-				float4  col =tex2D(_MainTex,i.uv) ;
-
                 fixed height = step(i.height,0);
 
-                fixed4 frontCol =height*fixed4(1,1,1,1) ;
+                fixed4 frontCol =height*(_FrontColor*step(i.height,-1*_EdgeWidth)+_EdgeColor*step(-1*_EdgeWidth,i.height)) ;
 
-                float4 backCol =float4(0.5,0.5,0.5,1)*height ;
-
-                float4 x= step(facing,0)*frontCol;
+                ////如果 frontcolor 高度小于某个数，使用frontcolor 否则使用edgeColor
+                float4 backCol =_BackColor*height ;
 
                 return facing > 0 ? frontCol: backCol ; 
+
             }
+            ENDCG
+        }
+
+
+        pass{
+            Cull back
+            ZWrite off 
+            AlphaToMask ON
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_fog
+            #include "UnityCG.cginc"
+
+            struct appdata
+            {
+                float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
+                float4 normal :NORMAL0;
+            };
+
+            struct v2f
+            {
+                float2 uv : TEXCOORD0;
+                UNITY_FOG_COORDS(1)
+                float4 vertex : SV_POSITION;
+                float L :TEXCOORD1;
+            };
+
+            v2f vert (appdata v)
+            {
+                v2f o;
+                v.vertex*=1.2;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                fixed3 N  =normalize( mul(v.normal,(float3x3)unity_WorldToObject));
+                fixed3 L = normalize(_WorldSpaceLightPos0.xyz);
+                fixed3 refle = normalize(reflect(-L,N));
+                fixed3 V = normalize(_WorldSpaceCameraPos.xyz-mul(unity_ObjectToWorld,v.vertex).xyz);
+                o.L  = pow( saturate(dot(V,refle)),2);
+                return o;
+                
+
+            }
+
+            fixed4 frag(v2f i ):SV_TARGET
+            {
+                return i.L;
+            }
+
             ENDCG
         }
     }

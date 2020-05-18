@@ -82,7 +82,7 @@
             // rotate around XZ
             float3 worldPosZ = float3 (worldPosX.y, worldPosX.z, worldPosX.x);     
             // combine rotations with worldPos, based on sine wave from script
-            float3 worldPosAdjusted = worldPos + (worldPosX  * _WobbleX)+ (worldPosZ* _WobbleZ);
+            float3 worldPosAdjusted = worldPos + (worldPosX  * _WobbleX);+ (worldPosZ* _WobbleZ);
             // how high up the liquid is
             o.fillEdge =  worldPosAdjusted.y + _FillAmount;
  
@@ -94,8 +94,6 @@
          fixed4 frag (v2f i, fixed facing : VFACE) : SV_Target
          {
            // sample the texture
-
-           return i.fillEdge;
            fixed4 col = tex2D(_MainTex, i.uv) * _Tint;
            // apply fog
            UNITY_APPLY_FOG(i.fogCoord, col);
