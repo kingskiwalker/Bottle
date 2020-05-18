@@ -4,7 +4,9 @@
     {
         _MainTex ("Texture", 2D) = "white" {}
         _Fill("_FillAmount",float) = 1
+        [HideInInspector]
         _WobbleX("Wobblex",Range(-1,1))=0.0
+        [HideInInspector]
         _WobbleZ("WobbleZ",Range(-1,1))=0.0
     }
     SubShader
@@ -14,9 +16,9 @@
 
         Pass
         {
-            Cull Back
+            Cull off
             ZWrite On
-        //    AlphaToMask on //用于剔除黑色部分
+           AlphaToMask on //用于剔除黑色部分
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -79,17 +81,24 @@
                 float3 worldPosZ = float3(worldPosX.y,worldPosX.z,worldPosX.x);
                 float3 worldPosAdjusted =worldPos+ (worldPosX*_WobbleX )+ (worldPosZ*_WobbleZ );
 
-                o.height  = _Fill + worldPosAdjusted.y;
-
+                o.height  =  worldPosAdjusted.y-_Fill;
                 o.pos = float4( worldPosAdjusted,0);
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag (v2f i,fixed facing:VFACE) : SV_Target
             {
 				float4  col =tex2D(_MainTex,i.uv) ;
-                
-                return i.height; 
+
+                fixed height = step(i.height,0);
+
+                fixed4 frontCol =height*fixed4(1,1,1,1) ;
+
+                float4 backCol =float4(0.5,0.5,0.5,1)*height ;
+
+                float4 x= step(facing,0)*frontCol;
+
+                return facing > 0 ? frontCol: backCol ; 
             }
             ENDCG
         }
