@@ -1,4 +1,4 @@
-﻿Shader "Unlit/Bottle"
+Shader "Unlit/Bottle"
 {
     Properties
     {
@@ -74,9 +74,10 @@
 				float alpha = degrees * UNITY_PI / 180;
 				float sina, cosa;
 				sincos(alpha, sina, cosa);
-				float2x2 m = float2x2(cosa, sina, -sina, cosa);
-				return float4(vertex.yz , mul(m, vertex.xz)).xzyw ;				
-			 } 
+				// float2x2 m = float2x2(cosa, sina, -sina, cosa); //旋转矩阵 绕原点进行旋转
+				// return float4(vertex.yz , mul(m, vertex.xz)).xzyw ; // 由于这里是将物体进行横置 实际上并不需要浪费性能进行旋转计算只需要调换xzy轴位置就好
+                return float4(vertex.yzxz).xzyw;
+                } 
 
             v2f vert (appdata v)
             {
@@ -87,6 +88,7 @@
                 o.vertex =  UnityObjectToClipPos( v.vertex);
 
                 float3 worldPos = mul(unity_ObjectToWorld,v.vertex.xyz); //此处如果用xyzw 把w分量页进行转换会导致以世界坐标0点为root坐标
+                ///为什么不对w分量进行矩阵转换会能使得 计算出来的坐标是以自身为原点的世界坐标 相当于 矩阵转换后的坐标点位置减去物体原点位置
                 float3 worldPosX = RotateAroundYInDegrees(float4(worldPos,0),360);
                 float3 worldPosZ = float3(worldPosX.y,worldPosX.z,worldPosX.x);
                 float3 worldPosAdjusted =worldPos+ (worldPosX*_WobbleX )+ (worldPosZ*_WobbleZ );
@@ -136,7 +138,8 @@
                 float4 vertex : SV_POSITION;
                 fixed3 N :TEXCOORD1;
                 fixed3 L :TEXCOORD2;
-                fixed3 V :TEXCOORD2;
+                fixed3 V :TEXCOORD3;
+                float4 pos :TEXCOORD4;
             };
 
             v2f vert (appdata v)
@@ -144,11 +147,15 @@
                 v2f o;
                 v.vertex*=1.2;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                fixed3 N  =normalize( mul(v.normal,(float3x3)unity_WorldToObject));
-                fixed3 L = normalize(_WorldSpaceLightPos0.xyz);
-                fixed3 refle = normalize(reflect(-L,N));
-                fixed3 V = normalize(_WorldSpaceCameraPos.xyz-mul(unity_ObjectToWorld,v.vertex).xyz);
-                o.L  = pow( saturate(dot(V,refle)),2);
+
+                // o.N  = normalize( mul(v.normal,(float3x3)unity_WorldToObject)); //调换normal与矩阵位置，达到worldToObject逆矩阵的效果
+                // o.V  = normalize(_WorldSpaceCameraPos.xyz-mul(unity_ObjectToWorld,v.vertex).xyz);
+                // o.L  = normalize(_WorldSpaceLightPos0.xyz);
+                
+
+                o.N=v.normal;
+
+                o.pos = mul(unity_ObjectToWorld,v.vertex);
                 return o;
                 
 
@@ -156,7 +163,23 @@
 
             fixed4 frag(v2f i ):SV_TARGET
             {
-                return i.L;
+
+                fixed3 N = normalize(mul(i.N,(float3x3)unity_WorldToObject));
+
+                fixed3 V = normalize(_WorldSpaceCameraPos.xyz-i.pos);
+
+                fixed3 L = normalize(_WorldSpaceLightPos0.xyz);
+
+                fixed3 refle = normalize(reflect(-L,N));
+
+                fixed heightLight = saturate( pow(smoothstep(0.9,1,saturate(dot(refle,V))),5));
+
+                fixed frinel = pow( saturate(dot(V,N)*-1+1),2)*0.8;
+
+                fixed col = saturate( (heightLight+frinel)+0.1);
+
+                return col; 
+
             }
 
             ENDCG
