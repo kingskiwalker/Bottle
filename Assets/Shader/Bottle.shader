@@ -21,8 +21,9 @@ Shader "Unlit/Bottle"
         Pass
         {
             Cull off
-            ZWrite On
-            AlphaToMask on //用于剔除黑色部分
+            ZWrite Off 
+            // AlphaToMask on //用于剔除黑色部分
+            Blend SrcAlpha One 
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -33,6 +34,7 @@ Shader "Unlit/Bottle"
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+                float4 normal:NORMAL;
             };
 
             struct v2f
@@ -42,6 +44,8 @@ Shader "Unlit/Bottle"
                 float4 vertex : SV_POSITION;
                 float height :TEXCOORD1;
                 float4 pos :TEXCOORD2;
+                float3 V:Color1;
+                float3 N:Color2;
             };
 
             sampler2D _MainTex;
@@ -92,9 +96,10 @@ Shader "Unlit/Bottle"
                 float3 worldPosX = RotateAroundYInDegrees(float4(worldPos,0),360);
                 float3 worldPosZ = float3(worldPosX.y,worldPosX.z,worldPosX.x);
                 float3 worldPosAdjusted =worldPos+ (worldPosX*_WobbleX )+ (worldPosZ*_WobbleZ );
-
                 o.height  =  worldPosAdjusted.y-_Fill;
                 o.pos = float4( worldPosAdjusted,0);
+                o.V = normalize(ObjSpaceViewDir(v.vertex));
+                o.N = v.normal; 
                 return o;
             }
 
@@ -102,8 +107,12 @@ Shader "Unlit/Bottle"
             {
                 fixed height = step(i.height,0);
 
-                fixed4 frontCol =height*(_FrontColor*step(i.height,-1*_EdgeWidth)+_EdgeColor*step(-1*_EdgeWidth,i.height)) ;
+                float fresnel = saturate( 1-pow(dot(i.N,i.V),1));
 
+                float4 fresnelColor = _FrontColor*smoothstep(0.95,1,fresnelColor)*0.3;
+
+                fixed4 frontCol =height*(_FrontColor*step(i.height,-1*_EdgeWidth)+_EdgeColor*step(-1*_EdgeWidth,i.height)) ;
+                frontCol += fresnel;
                 ////如果 frontcolor 高度小于某个数，使用frontcolor 否则使用edgeColor
                 float4 backCol =_BackColor*height ;
 

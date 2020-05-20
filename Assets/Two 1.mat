@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Two
+  m_Name: Two 1
   m_Shader: {fileID: 4800000, guid: 9ea0389a558e42042890521f76ee5a55, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
@@ -29,7 +29,7 @@ Material:
     - _WobbleX: 0
     - _WobbleZ: 0
     m_Colors:
-    - _BackColor: {r: 0.49777573, g: 0.5566038, b: 0, a: 1}
-    - _EdgeColor: {r: 1, g: 0, b: 0.09067249, a: 1}
+    - _BackColor: {r: 0, g: 0.6528602, b: 0.8490566, a: 1}
+    - _EdgeColor: {r: 0, g: 0.73584867, b: 0.735849, a: 1}
     - _FillColor: {r: 0.66140085, g: 0.8396226, b: 0.8262384, a: 1}
-    - _FrontColor: {r: 1, g: 0.8107188, b: 0, a: 1}
+    - _FrontColor: {r: 0, g: 0.7754011, b: 1, a: 1}
