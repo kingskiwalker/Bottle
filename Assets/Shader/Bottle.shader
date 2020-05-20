@@ -22,6 +22,7 @@ Shader "Unlit/Bottle"
         {
             Cull off
             ZWrite Off 
+
             // AlphaToMask on //用于剔除黑色部分
             Blend SrcAlpha One 
             CGPROGRAM
@@ -107,12 +108,12 @@ Shader "Unlit/Bottle"
             {
                 fixed height = step(i.height,0);
 
-                float fresnel = saturate( 1-pow(dot(i.N,i.V),1));
+                float fresnel = saturate(  1-pow(dot(i.N,i.V),1));
 
-                float4 fresnelColor = _FrontColor*smoothstep(0.95,1,fresnelColor)*0.3;
+                float4 fresnelColor = smoothstep(0.5,1,fresnel)*0.8;
 
-                fixed4 frontCol =height*(_FrontColor*step(i.height,-1*_EdgeWidth)+_EdgeColor*step(-1*_EdgeWidth,i.height)) ;
-                frontCol += fresnel;
+                float4 frontCol =height*(_FrontColor*step(i.height,-1*_EdgeWidth)+_EdgeColor*step(-1*_EdgeWidth,i.height)) ;
+                frontCol += fresnelColor;
                 ////如果 frontcolor 高度小于某个数，使用frontcolor 否则使用edgeColor
                 float4 backCol =_BackColor*height ;
 

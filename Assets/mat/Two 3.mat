@@ -25,7 +25,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _EdgeWidth: 0.08
-    - _Fill: 0.15
+    - _Fill: -0.03
     - _WobbleX: 0
     - _WobbleZ: 0
     m_Colors:
