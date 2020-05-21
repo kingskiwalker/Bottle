@@ -1,0 +1,66 @@
+[TOC]
+### 开始
+网上看到一个大神写了个水瓶的shader感觉十分酷炫  
+于是我也学着他的方法来学习一下  
+在练手之余写下这个教程希望自己后面还记得当时是怎么理解的把 - -
+
+
+### 拆解步骤
+
+#### 水位模拟
+
+一开始先实现一下比较简单的步骤，让水瓶无论处于哪个角度都呈现水面是水平的。  
+高度在什么情况下可以保持不变呢？  
+设想一下 如果当前的高度是根据世界坐标的高度进行clicp的话 是不是就能保持在一个平面呢。  
+那是不是就是将当前顶点的高度与它在世界坐标的高度进行对比 然后进行判断是渲染还是舍弃就行了。  
+但是这样得出来的效果会导致物体的水平面是根据世界坐标的高度进行决定的。  
+我们的想要的效果应该是根据输入的值离物体的中心点的距离来觉得水面高度。  
+相当于将物体的世界坐标再减去自身原点的世界坐标。  
+如：
+```
+ float3 WorldPos = mul(unity_ObjectToWorld,vertex.xyzw);
+ float3 CenterPos = mul(unity_ObjectToWorld,float4(0,0,0,1));
+ float3 pos = WorldPos - CenterPos;
+```
+又或者在通过矩阵转换时不对w轴进行转换。 
+```
+    float3 pos = mul(unity_ObjectToWorld,vertex.xyz);
+```
+这就得出一个以物体中心点为原点坐标的世界坐标轴。  
+我们就可以通过这个坐标的y轴与输入的高度_Fill进行对比来决定是否（渲染/透明）
+
+
+#### 起伏模拟
+这里需要分开两个步骤
+1. 一个是根据物体每一帧之间的位移差与旋转差来计算水面起伏程度。
+2. 一个则是通过shader中根据水平方向x,z加上对应的偏移量例如x越大增加的y方向偏移，x越大越小y方向偏移越小甚至相减
+3. 得到这两个数之后，就可以在shader中进行计算并且模拟水面晃动的效果了，也就是起伏程度*偏移高度。
+4. 偏移高度是相对固定的，所以需要从外部取得起伏程度（-1~1）来进行晃动的模拟。
+
+##### 位移差
+首先位移差与旋转差的可以通过update中传递取得上一帧的位置、旋转 与当前帧的位置，旋转再除以Time.deltaTime来得到一个速度值.
+
+///拖更托更 有空再继续补全 - -
+
+![横置](https://img-blog.csdnimg.cn/20200521232110597.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM5MDk5NjE5,size_10,color_FFFFFF,t_70)
+
+
+![image](https://raw.githubusercontent.com/kingskiwalker/Bottle/master/Image/1589771103(1).png)
+
+
+```
+float4 RotateAroundYInDegrees (float4 vertex, float degrees)
+    {
+        float alpha = degrees * UNITY_PI / 180;
+        float sina, cosa;
+        sincos(alpha, sina, cosa);
+        // float2x2 m = float2x2(cosa, sina, -sina, cosa); //旋转矩阵 绕原点进行旋转
+        // return float4(vertex.yz , mul(m, vertex.xz)).xzyw ; // 由于这里是将物体进行横置 实际上并不需要浪费性能进行旋转计算只需要调换xzy轴位置就好
+        return float4(vertex.yzxz).xzyw;
+    }
+```
+
+
+
+### 大神原地址
+> 参考 :  https://www.patreon.com/posts/quick-game-art-18245225
